@@ -1,10 +1,14 @@
 // #include <SDL/SDL_error.h>
 // #include <SDL/SDL_events.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_mouse.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_video.h>
 #include <math.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,12 +16,15 @@
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 800
-#define HEX_COLOR(hex)                                                         \
-  ((hex) >> (3 * 8)) & 0xFF, ((hex) >> (2 * 8)) & 0xFF,                        \
-      ((hex) >> (1 * 8)) & 0xFF, ((hex) >> (0 * 8)) & 0xFF
+#define SCREEN_FPS 60
+#define DELTA_TIME_SEC (1.0f / SCREEN_FPS)
+#define DELTA_TIME_MS (Uint32) floorf(DELTA_TIME_SEC * 1000.0f)
 #define BACKGROUND_COLOR 0x091413FF
 #define LINE_COLOR 0x408A71FF
 #define RECT_COLOR 0x285A48FF
+#define HEX_COLOR(hex)                                                         \
+  ((hex) >> (3 * 8)) & 0xFF, ((hex) >> (2 * 8)) & 0xFF,                        \
+      ((hex) >> (1 * 8)) & 0xFF, ((hex) >> (0 * 8)) & 0xFF
 int check_sdl_code(int code) {
   if (code < 0) {
     fprintf(stderr, "SDL error: %s\n", SDL_GetError());
@@ -32,12 +39,22 @@ void *check_sdl_ptr(void *ptr) {
   }
   return ptr;
 }
+
+float lerpf(float a, float b, float p) { return a + (b - a) * p; }
+
 typedef struct {
   float x;
   float y;
 } Vec2;
 
 Vec2 vec2(float x, float y) { return (Vec2){x, y}; }
+
+Vec2 vec2_sub(Vec2 a, Vec2 b) { return vec2(a.x - b.x, a.y - b.y); }
+Vec2 vec2_scale(Vec2 a, float s) { return vec2(a.x * s, a.y * s); }
+Vec2 vec2_add(Vec2 a, Vec2 b) { return vec2(a.x + b.x, a.y + b.y); }
+Vec2 lerpv2(Vec2 a, Vec2 b, float p) {
+  return vec2_add(a, vec2_scale(vec2_sub(b, a), p));
+}
 
 void render_line(SDL_Renderer *renderer, Vec2 begin, Vec2 end, uint32_t color) {
   check_sdl_code(SDL_SetRenderDrawColor(renderer, HEX_COLOR(color)));
@@ -51,14 +68,28 @@ void fill_rect(SDL_Renderer *renderer, Vec2 pos, Vec2 size, uint32_t color) {
                    (int)floorf(size.y)};
   check_sdl_code(SDL_RenderFillRect(renderer, &rect));
 }
+void render_marker(SDL_Renderer *renderer, Vec2 pos, Vec2 marker_size,
+                   uint32_t color) {
+  fill_rect(renderer, vec2_sub(pos, vec2_scale(marker_size, 0.5)), marker_size,
+            color);
+}
+
+#define PS_CAPACITY 256
+
+Vec2 ps[PS_CAPACITY];
+size_t ps_count = 0;
+
 int main(void) {
   check_sdl_code(SDL_Init(SDL_INIT_VIDEO));
+  Vec2 marker_size = {50, 50};
   SDL_Window *const window =
       check_sdl_ptr(SDL_CreateWindow("Bezier Curves", 0, 0, SCREEN_WIDTH,
                                      SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE));
   SDL_Renderer *const renderer =
       check_sdl_ptr(SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED));
+  float p = 0;
   int quit = 0;
+  float t = 0.0f;
   while (!quit) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -66,19 +97,46 @@ int main(void) {
       case SDL_QUIT:
         quit = 1;
         break;
+      case SDL_MOUSEBUTTONDOWN:
+        switch (event.button.button) {
+        case SDL_BUTTON_LEFT:
+          ps[ps_count++] = vec2(event.button.x, event.button.y);
+          break;
+        case SDL_BUTTON_RIGHT:
+          break;
+        }
+        break;
       }
     }
     check_sdl_code(
         SDL_SetRenderDrawColor(renderer, HEX_COLOR(BACKGROUND_COLOR)));
     check_sdl_code(SDL_RenderClear(renderer));
-    render_line(renderer, vec2(0, 0), vec2(SCREEN_WIDTH, SCREEN_HEIGHT),
-                LINE_COLOR);
-    render_line(renderer, vec2(SCREEN_WIDTH, 0), vec2(0, SCREEN_HEIGHT),
-                LINE_COLOR);
-    fill_rect(renderer, vec2(0, 0), vec2(50, 120), RECT_COLOR);
+
+    for (size_t i = 0; i < ps_count; i++) {
+      render_marker(renderer, ps[i], marker_size, LINE_COLOR);
+    }
+
+    // COOL ANIMATION VERY USELESS
+    // for (size_t i = 0; i < ps_count; i++) {
+    //   for (size_t j = i; j < ps_count; j++) {
+    //     if (i != j) {
+    //       render_marker(renderer, lerpv2(ps[i], ps[j], (sinf(t) + 1) * 0.5f),
+    //                     marker_size, RECT_COLOR);
+    //     }
+    //   }
+    // }
+    //
+
+    for (size_t i = 0; ps_count > 0 && i < ps_count - 1; i++) {
+      render_marker(renderer, lerpv2(ps[i], ps[i + 1], (sinf(t) + 1) * 0.5f),
+                    marker_size, RECT_COLOR);
+    }
+
     SDL_RenderPresent(renderer);
     check_sdl_code(
         SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT));
+    SDL_Delay(DELTA_TIME_MS);
+    t += DELTA_TIME_SEC;
   }
 
   SDL_Quit();
