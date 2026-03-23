@@ -20,8 +20,9 @@
 #define DELTA_TIME_SEC (1.0f / SCREEN_FPS)
 #define DELTA_TIME_MS (Uint32) floorf(DELTA_TIME_SEC * 1000.0f)
 #define BACKGROUND_COLOR 0x091413FF
-#define LINE_COLOR 0x408A71FF
-#define RECT_COLOR 0x285A48FF
+#define PART1_COLOR 0x408A71FF
+#define PART2_COLOR 0x285A48FF
+#define PART3_COLOR 0xB0E4CCFF
 #define HEX_COLOR(hex)                                                         \
   ((hex) >> (3 * 8)) & 0xFF, ((hex) >> (2 * 8)) & 0xFF,                        \
       ((hex) >> (1 * 8)) & 0xFF, ((hex) >> (0 * 8)) & 0xFF
@@ -74,6 +75,17 @@ void render_marker(SDL_Renderer *renderer, Vec2 pos, Vec2 marker_size,
             color);
 }
 
+void render_bezier_markers(SDL_Renderer *renderer, Vec2 a, Vec2 b, Vec2 c,
+                           float s, Vec2 marker_size, uint32_t color) {
+  float p = 0.0f;
+  for (p = 0.0f; p < 1.0f; p += s) {
+    Vec2 ab = lerpv2(a, b, p);
+    Vec2 bc = lerpv2(b, c, p);
+    Vec2 abc = lerpv2(ab, bc, p);
+    render_marker(renderer, abc, marker_size, color);
+  }
+}
+
 #define PS_CAPACITY 256
 
 Vec2 ps[PS_CAPACITY];
@@ -81,7 +93,7 @@ size_t ps_count = 0;
 
 int main(void) {
   check_sdl_code(SDL_Init(SDL_INIT_VIDEO));
-  Vec2 marker_size = {50, 50};
+  Vec2 marker_size = {20, 20};
   SDL_Window *const window =
       check_sdl_ptr(SDL_CreateWindow("Bezier Curves", 0, 0, SCREEN_WIDTH,
                                      SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE));
@@ -112,25 +124,47 @@ int main(void) {
         SDL_SetRenderDrawColor(renderer, HEX_COLOR(BACKGROUND_COLOR)));
     check_sdl_code(SDL_RenderClear(renderer));
 
-    for (size_t i = 0; i < ps_count; i++) {
-      render_marker(renderer, ps[i], marker_size, LINE_COLOR);
+    for (size_t i = 0; ps_count > 0 && i < ps_count; i++) {
+      render_marker(renderer, ps[i], marker_size, PART1_COLOR);
     }
 
-    // COOL ANIMATION VERY USELESS
-    // for (size_t i = 0; i < ps_count; i++) {
-    //   for (size_t j = i; j < ps_count; j++) {
-    //     if (i != j) {
-    //       render_marker(renderer, lerpv2(ps[i], ps[j], (sinf(t) + 1) * 0.5f),
-    //                     marker_size, RECT_COLOR);
-    //     }
-    //   }
+    for (size_t i = 0; ps_count > 2 && i < ps_count - 3; i++) {
+      // if (ps_count >= 3) {
+      render_bezier_markers(renderer, ps[i], ps[i + 1], ps[i + 2], 0.001f,
+                            marker_size, PART2_COLOR);
+    }
+
+    // Bezier Animations
+    // PART 1
+    // for (size_t i = 0; ps_count > 0 && i < ps_count; i++) {
+    //   render_marker(renderer, ps[i], marker_size, PART1_COLOR);
     // }
-    //
 
-    for (size_t i = 0; ps_count > 0 && i < ps_count - 1; i++) {
-      render_marker(renderer, lerpv2(ps[i], ps[i + 1], (sinf(t) + 1) * 0.5f),
-                    marker_size, RECT_COLOR);
-    }
+    // // COOL ANIMATION VERY USELESS
+    // // for (size_t i = 0; i < ps_count; i++) {
+    // //   for (size_t j = i; j < ps_count; j++) {
+    // //     if (i != j) {
+    // //       render_marker(renderer, lerpv2(ps[i], ps[j], (sinf(t) + 1) *
+    // 0.5f),
+    // //                     marker_size, PART1_COLOR);
+    // //     }
+    // //   }
+    // // }
+
+    // // PART 2
+    // for (size_t i = 0; ps_count > 0 && i < ps_count - 1; i++) {
+    //   render_marker(renderer, lerpv2(ps[i], ps[i + 1], (sinf(t) + 1) * 0.5f),
+    //                 marker_size, PART2_COLOR);
+    // }
+
+    // // PART 3
+    // for (size_t i = 0; ps_count > 1 && i < ps_count - 2; i++) {
+    //   Vec2 a = lerpv2(ps[i], ps[i + 1], (sinf(t) + 1) * 0.5f);
+    //   Vec2 b = lerpv2(ps[i + 1], ps[i + 2], (sinf(t) + 1) * 0.5f);
+    //   render_marker(renderer, lerpv2(a, b, (sinf(t) + 1) * 0.5f),
+    //   marker_size,
+    //                 PART3_COLOR);
+    // }
 
     SDL_RenderPresent(renderer);
     check_sdl_code(
