@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <wchar.h>
 
 #define SCREEN_WIDTH 800
@@ -75,26 +76,45 @@ void render_marker(SDL_Renderer *renderer, Vec2 pos, Vec2 marker_size,
   fill_rect(renderer, vec2_sub(pos, vec2_scale(marker_size, 0.5)), marker_size,
             color);
 }
-
-void render_bezier_markers(SDL_Renderer *renderer, Vec2 a, Vec2 b, Vec2 c,
-                           Vec2 d, float s, Vec2 marker_size, uint32_t color) {
-  float p = 0.0f;
-  for (p = 0.0f; p < 1.0f; p += s) {
-    const Vec2 ab = lerpv2(a, b, p);
-    const Vec2 bc = lerpv2(b, c, p);
-    const Vec2 cd = lerpv2(c, d, p);
-    const Vec2 abc = lerpv2(ab, bc, p);
-    const Vec2 bcd = lerpv2(bc, cd, p);
-    const Vec2 abcd = lerpv2(abc, bcd, p);
-    render_marker(renderer, abcd, marker_size, color);
-  }
-}
-
 #define PS_CAPACITY 256
 
 Vec2 ps[PS_CAPACITY];
+Vec2 xs[PS_CAPACITY];
 size_t ps_count = 0;
 int ps_selected = -1;
+
+Vec2 beziern_sample(Vec2 *xs, Vec2 *px, size_t n, float p) {
+  // Vec2 ys[PS_CAPACITY] = {0};
+  memcpy(xs, ps, sizeof(Vec2) * n);
+  size_t i = 0;
+  while (n > 1) {
+    for (i = 0; i < n - 1; i++) {
+      xs[i] = lerpv2(xs[i], xs[i + 1], p);
+    }
+    n--;
+  }
+  return xs[0];
+}
+
+void render_bezier_markers(SDL_Renderer *renderer, Vec2 *xs, Vec2 *ps, size_t n,
+                           float s, Vec2 marker_size, uint32_t color) {
+  float p = 0.0f;
+  for (p = 0.0f; p < 1.0f; p += s) {
+    render_marker(renderer, beziern_sample(xs, ps, n, p), marker_size, color);
+  }
+}
+
+void render_bezier_curve(SDL_Renderer *renderer, Vec2 *xs, Vec2 *ps, size_t n,
+                         float s, Vec2 marker_size, uint32_t color) {
+  float p = 0.0f;
+  for (p = 0.0f; p <= 1.0f; p += s) {
+    Vec2 start = beziern_sample(xs, ps, n, p);
+    Vec2 end = beziern_sample(xs, ps, n, p + s);
+    render_line(renderer, start, end, color);
+    start = end;
+  }
+}
+
 int ps_at(Vec2 pos, Vec2 ps_size) {
   for (int i = 0; i < ps_count; i++) {
     const Vec2 ps_begin = vec2_sub(ps[i], vec2_scale(ps_size, 0.5f));
@@ -118,6 +138,7 @@ int main(void) {
   float p = 0;
   int quit = 0;
   float t = 0.0f;
+  float s = 0.1f;
   while (!quit) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -129,18 +150,23 @@ int main(void) {
         switch (event.button.button) {
         case SDL_BUTTON_LEFT: {
           Vec2 mouse_pos = vec2(event.button.x, event.button.y);
-          if (ps_count < 4) {
+          ps_selected = ps_at(mouse_pos, marker_size);
+          if (ps_selected < 0) {
             ps[ps_count++] = mouse_pos;
-          } else {
-            ps_selected = ps_at(mouse_pos, marker_size);
           }
         } break;
         }
-        break;
       case SDL_MOUSEMOTION: {
         Vec2 mouse_pos = vec2(event.motion.x, event.motion.y);
         if (ps_selected > -1) {
           ps[ps_selected] = mouse_pos;
+        }
+      } break;
+      case SDL_MOUSEWHEEL: {
+        if (event.wheel.y > 0) {
+          s += fmin(0.01f, 0.999f);
+        } else if (event.wheel.y < 0) {
+          s -= fmax(0.01f, 0.0001f);
         }
       } break;
       } break;
@@ -155,24 +181,26 @@ int main(void) {
         SDL_SetRenderDrawColor(renderer, HEX_COLOR(BACKGROUND_COLOR)));
     check_sdl_code(SDL_RenderClear(renderer));
 
-    for (size_t i = 0; ps_count > 0 && i < ps_count; i++) {
+    for (size_t i = 0; i < ps_count; i++) {
       render_marker(renderer, ps[i], marker_size, PART1_COLOR);
+      if (i < ps_count - 1) {
+        render_line(renderer, ps[i], ps[i + 1], PART2_COLOR);
+      }
     }
 
     // for (size_t i = 0; ps_count > 3 && i < ps_count - 4; i++) {
-    if (ps_count >= 4) {
+    if (ps_count >= 1) {
       size_t i = 0;
-      render_line(renderer, ps[i], ps[i + 1], PART3_COLOR);
-      render_line(renderer, ps[i + 2], ps[i + 3], PART3_COLOR);
-      render_bezier_markers(renderer, ps[i], ps[i + 1], ps[i + 2], ps[i + 3],
-                            0.001f, marker_size, PART2_COLOR);
+      render_bezier_curve(renderer, xs, ps, ps_count, s, marker_size,
+                          PART3_COLOR);
     }
 
     // COOL ANIMATION VERY USELESS
     // for (size_t i = 0; i < ps_count; i++) {
     //   for (size_t j = i; j < ps_count; j++) {
     //     if (i != j) {
-    //       render_marker(renderer, lerpv2(ps[i], ps[j], (sinf(t) + 1) * 0.5f),
+    //       render_marker(renderer, lerpv2(ps[i], ps[j], (sinf(t) + 1) *
+    //       0.5f),
     //                     marker_size, PART1_COLOR);
     //     }
     //   }
@@ -185,7 +213,8 @@ int main(void) {
     // }
     // // PART 2
     // for (size_t i = 0; ps_count > 0 && i < ps_count - 1; i++) {
-    //   render_marker(renderer, lerpv2(ps[i], ps[i + 1], (sinf(t) + 1) * 0.5f),
+    //   render_marker(renderer, lerpv2(ps[i], ps[i + 1], (sinf(t) + 1) *
+    //   0.5f),
     //                 marker_size, PART2_COLOR);
     // }
     // // PART 3
