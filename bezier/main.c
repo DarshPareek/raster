@@ -7,6 +7,7 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_video.h>
+#include <complex.h>
 #include <math.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -161,33 +162,32 @@ int main(void) {
     // for (size_t i = 0; ps_count > 3 && i < ps_count - 4; i++) {
     if (ps_count >= 4) {
       size_t i = 0;
+      render_line(renderer, ps[i], ps[i + 1], PART3_COLOR);
+      render_line(renderer, ps[i + 2], ps[i + 3], PART3_COLOR);
       render_bezier_markers(renderer, ps[i], ps[i + 1], ps[i + 2], ps[i + 3],
                             0.001f, marker_size, PART2_COLOR);
     }
+
+    // COOL ANIMATION VERY USELESS
+    // for (size_t i = 0; i < ps_count; i++) {
+    //   for (size_t j = i; j < ps_count; j++) {
+    //     if (i != j) {
+    //       render_marker(renderer, lerpv2(ps[i], ps[j], (sinf(t) + 1) * 0.5f),
+    //                     marker_size, PART1_COLOR);
+    //     }
+    //   }
+    // }
 
     // Bezier Animations
     // PART 1
     // for (size_t i = 0; ps_count > 0 && i < ps_count; i++) {
     //   render_marker(renderer, ps[i], marker_size, PART1_COLOR);
     // }
-
-    // // COOL ANIMATION VERY USELESS
-    // // for (size_t i = 0; i < ps_count; i++) {
-    // //   for (size_t j = i; j < ps_count; j++) {
-    // //     if (i != j) {
-    // //       render_marker(renderer, lerpv2(ps[i], ps[j], (sinf(t) + 1) *
-    // 0.5f),
-    // //                     marker_size, PART1_COLOR);
-    // //     }
-    // //   }
-    // // }
-
     // // PART 2
     // for (size_t i = 0; ps_count > 0 && i < ps_count - 1; i++) {
     //   render_marker(renderer, lerpv2(ps[i], ps[i + 1], (sinf(t) + 1) * 0.5f),
     //                 marker_size, PART2_COLOR);
     // }
-
     // // PART 3
     // for (size_t i = 0; ps_count > 1 && i < ps_count - 2; i++) {
     //   Vec2 a = lerpv2(ps[i], ps[i + 1], (sinf(t) + 1) * 0.5f);
