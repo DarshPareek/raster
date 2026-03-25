@@ -1,7 +1,0 @@
-/home/darsh/devel/raster/bezier_rust/target/debug/build/raylib-sys-b5be1bf23e471bd7/out/lib/libraylib.a
-/home/darsh/devel/raster/bezier_rust/target/debug/build/raylib-sys-b5be1bf23e471bd7/out/include/raylib.h
-/home/darsh/devel/raster/bezier_rust/target/debug/build/raylib-sys-b5be1bf23e471bd7/out/include/rlgl.h
-/home/darsh/devel/raster/bezier_rust/target/debug/build/raylib-sys-b5be1bf23e471bd7/out/include/raymath.h
-/home/darsh/devel/raster/bezier_rust/target/debug/build/raylib-sys-b5be1bf23e471bd7/out/lib/pkgconfig/raylib.pc
-/home/darsh/devel/raster/bezier_rust/target/debug/build/raylib-sys-b5be1bf23e471bd7/out/lib/cmake/raylib/raylib-config-version.cmake
-/home/darsh/devel/raster/bezier_rust/target/debug/build/raylib-sys-b5be1bf23e471bd7/out/lib/cmake/raylib/raylib-config.cmake

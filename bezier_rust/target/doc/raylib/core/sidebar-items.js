@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["init"],"mod":["audio","automation","callbacks","camera","collision","color","data","drawing","error","file","input","logging","math","misc","models","shaders","text","texture","vr","window"],"struct":["RaylibBuilder","RaylibHandle","RaylibThread"]};

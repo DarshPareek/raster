@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["Camera2D","Camera3D"],"type":["Camera"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["gen_image_font_atlas"],"struct":["Font","GlyphInfo","RSliceGlyphInfo","WeakFont"],"trait":["RaylibFont"]};

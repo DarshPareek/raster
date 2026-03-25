@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["TraceLogLevel"],"fn":["attach_audio_stream_processor_to_music","custom_trace_log_callback","set_audio_stream_callback","set_load_file_data_callback","set_load_file_text_callback","set_save_file_data_callback","set_save_file_text_callback","set_trace_log_callback"],"struct":["AudioStreamProcessorCallback","SetLogError"]};

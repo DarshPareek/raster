@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["get_camera_matrix","get_camera_matrix2D","get_current_monitor","get_current_monitor_index","get_monitor_count","get_monitor_height","get_monitor_info","get_monitor_name","get_monitor_physical_height","get_monitor_physical_width","get_monitor_position","get_monitor_refresh_rate","get_monitor_width"],"struct":["MonitorInfo","WindowState"]};

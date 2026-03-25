@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["lerp","rquat","rrect","rvec2","rvec3"],"struct":["BoundingBox","Matrix","RSliceVec4","Ray","RayCollision","Rectangle","Transform","Vector2","Vector3","Vector4"],"type":["Quaternion"]};

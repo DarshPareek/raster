@@ -1,2 +1,0 @@
-window.ALL_CRATES = ["bezier_rust","cfg_if","paste","proc_macro2","quote","raylib","raylib_sys","rust_analyzer","seq_macro","syn","thiserror","thiserror_impl","unicode_ident"];
-//{"start":21,"fragment_lengths":[13,9,8,14,8,9,13,16,12,6,12,17,16]}

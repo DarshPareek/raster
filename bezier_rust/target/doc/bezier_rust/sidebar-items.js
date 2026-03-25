@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["WINDOW_HEIGHT","WINDOW_WIDTH"],"fn":["main"]};

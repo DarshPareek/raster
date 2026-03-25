@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["RaylibBlendMode","RaylibDrawHandle","RaylibMode2D","RaylibMode3D","RaylibScissorMode","RaylibShaderMode","RaylibTextureMode","RaylibVRMode"],"trait":["RaylibBlendModeExt","RaylibDraw","RaylibDraw3D","RaylibMode2DExt","RaylibMode3DExt","RaylibScissorModeExt","RaylibShaderModeExt","RaylibTextureModeExt","RaylibVRModeExt"]};
