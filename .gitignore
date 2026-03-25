@@ -3,3 +3,5 @@
 ./target
 ./bezier_rust/target
 ./bezier_rust/target/*
+bezier_rust/target
+bezier_rust/target/*
