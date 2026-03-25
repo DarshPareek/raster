@@ -75,7 +75,7 @@ fn ps_at(pos: Vector2, ps: &Vec<Vector2>) -> i32 {
 
 fn main() {
     let mut ps: Vec<Vector2> = Vec::new();
-    let mut s: f32 = 0.001;
+    let mut s: f32 = 0.01;
     let mut ps_selected: i32 = -1;
     let (mut rl, thread) = raylib::init()
         .size(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -117,8 +117,8 @@ fn main() {
             }
         } else if mouse_wheel < 0.0 {
             s -= 0.01;
-            if s < 0.01 {
-                s = 0.001;
+            if s < 0.1 {
+                s = 0.01;
             }
         }
         let mut d = rl.begin_drawing(&thread);
