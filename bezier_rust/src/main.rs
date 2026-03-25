@@ -39,6 +39,10 @@ fn render_line(d: &mut RaylibDrawHandle, from: Vector2, to: Vector2, color: Colo
     );
 }
 
+fn bezier3_sample(p1: Vector2, p2: Vector2, p3: Vector2, t: f32) -> Vector2 {
+    return p1 + (p2 - p1).scale_by(t * 2.0) + (p3 + p2.scale_by(-2.0) + p1).scale_by(t * t);
+}
+
 fn beziern_sample(ps: &mut Vec<Vector2>, p: f32) -> Vector2 {
     let mut xs: Vec<Vector2> = ps.clone();
     while xs.len() > 1 {
@@ -50,12 +54,24 @@ fn beziern_sample(ps: &mut Vec<Vector2>, p: f32) -> Vector2 {
     return xs[0];
 }
 
+fn render_bezier_markers(d: &mut RaylibDrawHandle, ps: &mut Vec<Vector2>, s: f32, color: Color) {
+    let mut p: f32 = 0.0;
+    while p <= 1.0 {
+        render_marker(d, bezier3_sample(ps[0], ps[1], ps[2], p), color);
+        p += s;
+    }
+}
+
 fn render_bezier_curve(d: &mut RaylibDrawHandle, ps: &mut Vec<Vector2>, s: f32, color: Color) {
     let mut p: f32 = 0.0;
     while p <= 1.0 {
         let mut start: Vector2 = beziern_sample(ps, p);
+        // let mut start: Vector2 = bezier3_sample(ps[0], ps[1], ps[2], p);
         let end: Vector2 = beziern_sample(ps, p + s);
         render_line(d, start, end, color);
+        // render_line(d, ps[0], start, color);
+        // render_line(d, start, ps[2], color);
+        // start = ps[2];
         start = end;
         p += s;
     }
@@ -71,6 +87,24 @@ fn ps_at(pos: Vector2, ps: &Vec<Vector2>) -> i32 {
         }
     }
     return -1;
+}
+
+fn solve_quad_equation(p1: Vector2, p2: Vector2, p3: Vector2, p0: Vector2, threshold: f32) -> i32 {
+    let ax = (p3 + p2.scale_by(-2.0) + p1).x;
+    let bx = (p2 - p1).scale_by(2.0).x;
+    let cx = (p1 - p0).x;
+    let dx = bx * bx - 4.0 * ax * cx;
+    if dx > 0.0 {
+        let t1 = ((p2 - p1).scale_by(-2.0).x - dx.sqrt())
+            / (p3 + p2.scale_by(-2.0) + p1).scale_by(2.0).x;
+        let t2 = ((p2 - p1).scale_by(-2.0).x + dx.sqrt())
+            / (p3 + p2.scale_by(-2.0) + p1).scale_by(2.0).x;
+        let y1 = p1.y + 2.0 * t1 * (p2.y - p1.y) + t1 * t1 * (p3.y - 2.0 * p2.y + p1.y);
+        let y2 = p1.y + 2.0 * t2 * (p2.y - p1.y) + t2 * t2 * (p3.y - 2.0 * p2.y + p1.y);
+        return ((0.0 <= t1 && t1 <= 1.0 && (p0.y - y1).abs() < threshold)
+            || (0.0 <= t1 && t1 <= 1.0 && (p0.y - y2).abs() < threshold)) as i32;
+    }
+    return 0;
 }
 
 fn main() {
@@ -109,6 +143,7 @@ fn main() {
         if rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT) {
             ps_selected = -1;
         }
+
         let mouse_wheel = rl.get_mouse_wheel_move();
         if mouse_wheel > 0.0 {
             s += 0.01;
@@ -126,8 +161,18 @@ fn main() {
         for i in 0..ps.len() {
             render_marker(&mut d, ps[i], hexcolor(MARKER_COLOR));
         }
-        if ps.len() > 1 {
+        if ps.len() > 2 {
             render_bezier_curve(&mut d, &mut ps, s, hexcolor(BEZIER_COLOR));
+            render_bezier_markers(&mut d, &mut ps, s, hexcolor(BEZIER_COLOR));
+        }
+        let bezier_probe = mouse_pos;
+        if ps.len() >= 3 {
+            let roots = solve_quad_equation(ps[0], ps[1], ps[2], mouse_pos, 10.0);
+            if roots == 1 {
+                render_marker(&mut d, bezier_probe, Color::GREEN);
+            } else {
+                render_marker(&mut d, bezier_probe, Color::RED);
+            }
         }
 
         // if ps.len() > 1 {
