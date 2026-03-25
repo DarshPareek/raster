@@ -1,0 +1,9 @@
+(function() {
+    const implementors = Object.fromEntries([["raylib",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.94.0/core/ops/arith/trait.AddAssign.html\" title=\"trait core::ops::arith::AddAssign\">AddAssign</a> for <a class=\"struct\" href=\"raylib/core/math/struct.Matrix.html\" title=\"struct raylib::core::math::Matrix\">Matrix</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.94.0/core/ops/arith/trait.AddAssign.html\" title=\"trait core::ops::arith::AddAssign\">AddAssign</a> for <a class=\"struct\" href=\"raylib/core/math/struct.Vector2.html\" title=\"struct raylib::core::math::Vector2\">Vector2</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.94.0/core/ops/arith/trait.AddAssign.html\" title=\"trait core::ops::arith::AddAssign\">AddAssign</a> for <a class=\"struct\" href=\"raylib/core/math/struct.Vector3.html\" title=\"struct raylib::core::math::Vector3\">Vector3</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.94.0/core/ops/arith/trait.AddAssign.html\" title=\"trait core::ops::arith::AddAssign\">AddAssign</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.94.0/std/primitive.f32.html\">f32</a>&gt; for <a class=\"struct\" href=\"raylib/core/math/struct.Vector2.html\" title=\"struct raylib::core::math::Vector2\">Vector2</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.94.0/core/ops/arith/trait.AddAssign.html\" title=\"trait core::ops::arith::AddAssign\">AddAssign</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.94.0/std/primitive.f32.html\">f32</a>&gt; for <a class=\"struct\" href=\"raylib/core/math/struct.Vector3.html\" title=\"struct raylib::core::math::Vector3\">Vector3</a>",0]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":59,"fragment_lengths":[1680]}

@@ -1,0 +1,10 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/darsh/devel/raster/bezier_rust/target/debug/build/raylib-sys-b5be1bf23e471bd7/out/build/cmake_install.cmake",
+		"/home/darsh/devel/raster/bezier_rust/target/debug/build/raylib-sys-b5be1bf23e471bd7/out/build/raylib/cmake_install.cmake",
+		"/home/darsh/devel/raster/bezier_rust/target/debug/build/raylib-sys-b5be1bf23e471bd7/out/build/raylib/external/glfw/cmake_install.cmake",
+		"/home/darsh/devel/raster/bezier_rust/target/debug/build/raylib-sys-b5be1bf23e471bd7/out/build/raylib/external/glfw/src/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["get_pixel_data_size"],"struct":["Image","ImageColors","ImagePalette","NPatchInfo","RenderTexture2D","Texture2D","WeakRenderTexture2D","WeakTexture2D"],"trait":["RaylibRenderTexture2D","RaylibTexture2D"]};

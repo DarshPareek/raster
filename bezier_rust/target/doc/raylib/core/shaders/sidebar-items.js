@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Shader","WeakShader"],"trait":["RaylibShader","ShaderV"]};
