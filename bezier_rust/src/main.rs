@@ -115,6 +115,7 @@ fn main() {
         .size(WINDOW_WIDTH, WINDOW_HEIGHT)
         .title("Bezier Curves")
         .build();
+    let mut shader = rl.load_shader(&thread, Some(""), Some("src/shader.fs"));
     rl.set_target_fps(60);
     while !rl.window_should_close() {
         // Handling Inputs
@@ -158,23 +159,23 @@ fn main() {
         }
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(hexcolor(BACKGROUD_COLOR));
+        let mut sd = d.begin_shader_mode(&mut shader);
         for i in 0..ps.len() {
-            render_marker(&mut d, ps[i], hexcolor(MARKER_COLOR));
+            render_marker(&mut sd, ps[i], hexcolor(MARKER_COLOR));
         }
         if ps.len() > 2 {
-            render_bezier_curve(&mut d, &mut ps, s, hexcolor(BEZIER_COLOR));
-            render_bezier_markers(&mut d, &mut ps, s, hexcolor(BEZIER_COLOR));
+            render_bezier_curve(&mut sd, &mut ps, s, hexcolor(BEZIER_COLOR));
+            render_bezier_markers(&mut sd, &mut ps, s, hexcolor(BEZIER_COLOR));
         }
         let bezier_probe = mouse_pos;
         if ps.len() >= 3 {
             let roots = solve_quad_equation(ps[0], ps[1], ps[2], mouse_pos, 10.0);
             if roots == 1 {
-                render_marker(&mut d, bezier_probe, Color::GREEN);
+                render_marker(&mut sd, bezier_probe, Color::GREEN);
             } else {
-                render_marker(&mut d, bezier_probe, Color::RED);
+                render_marker(&mut sd, bezier_probe, Color::RED);
             }
         }
-
         // if ps.len() > 1 {
         //     for i in 0..(ps.len() - 1) {
         //         render_line(&mut d, ps[i], ps[i + 1], Color::LIGHTGREEN);
