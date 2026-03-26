@@ -117,7 +117,9 @@ fn main() {
         .build();
     rl.set_target_fps(60);
     while !rl.window_should_close() {
-        // Handling Inputs
+        let frame_time = rl.get_frame_time();
+        let fps = rl.get_fps();
+        println!("FPS: {fps}, Frame Time {frame_time}");
         if rl.is_key_pressed(KeyboardKey::KEY_A) {
             println!("Working on Animations");
         }
