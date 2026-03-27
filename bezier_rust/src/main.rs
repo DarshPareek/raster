@@ -30,13 +30,7 @@ fn render_marker(d: &mut RaylibDrawHandle, pos: Vector2, color: Color) {
 }
 
 fn render_line(d: &mut RaylibDrawHandle, from: Vector2, to: Vector2, color: Color) {
-    d.draw_line(
-        from.x as i32,
-        from.y as i32,
-        to.x as i32,
-        to.y as i32,
-        color,
-    );
+    d.draw_line_ex(from, to, 3.0, color);
 }
 
 fn bezier3_sample(p1: Vector2, p2: Vector2, p3: Vector2, t: f32) -> Vector2 {
@@ -102,7 +96,7 @@ fn solve_quad_equation(p1: Vector2, p2: Vector2, p3: Vector2, p0: Vector2, thres
         let y1 = p1.y + 2.0 * t1 * (p2.y - p1.y) + t1 * t1 * (p3.y - 2.0 * p2.y + p1.y);
         let y2 = p1.y + 2.0 * t2 * (p2.y - p1.y) + t2 * t2 * (p3.y - 2.0 * p2.y + p1.y);
         return ((0.0 <= t1 && t1 <= 1.0 && (p0.y - y1).abs() < threshold)
-            || (0.0 <= t1 && t1 <= 1.0 && (p0.y - y2).abs() < threshold)) as i32;
+            || (0.0 <= t2 && t2 <= 1.0 && (p0.y - y2).abs() < threshold)) as i32;
     }
     return 0;
 }
@@ -111,6 +105,8 @@ fn main() {
     let mut ps: Vec<Vector2> = Vec::new();
     let mut s: f32 = 0.01;
     let mut ps_selected: i32 = -1;
+    let mut line_toggle = false;
+    let mut marker_toggle = false;
     let (mut rl, thread) = raylib::init()
         .size(WINDOW_WIDTH, WINDOW_HEIGHT)
         .title("Bezier Curves")
@@ -119,15 +115,23 @@ fn main() {
     while !rl.window_should_close() {
         let frame_time = rl.get_frame_time();
         let fps = rl.get_fps();
-        println!("FPS: {fps}, Frame Time {frame_time}");
+        // println!("FPS: {fps}, Frame Time {frame_time}");
         if rl.is_key_pressed(KeyboardKey::KEY_A) {
             println!("Working on Animations");
         }
         if rl.is_key_pressed(KeyboardKey::KEY_S) {
-            println!("Working on Adding Markers");
+            if !marker_toggle {
+                marker_toggle = true
+            } else {
+                marker_toggle = false;
+            }
         }
         if rl.is_key_pressed(KeyboardKey::KEY_L) {
-            println!("Working on Adding Lines");
+            if !line_toggle {
+                line_toggle = true
+            } else {
+                line_toggle = false;
+            }
         }
         let mouse_pos = rl.get_mouse_position();
         if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
@@ -160,27 +164,29 @@ fn main() {
         }
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(hexcolor(BACKGROUD_COLOR));
-        for i in 0..ps.len() {
-            render_marker(&mut d, ps[i], hexcolor(MARKER_COLOR));
+        if marker_toggle {
+            for i in 0..ps.len() {
+                render_marker(&mut d, ps[i], hexcolor(MARKER_COLOR));
+            }
         }
         if ps.len() > 2 {
             render_bezier_curve(&mut d, &mut ps, s, hexcolor(BEZIER_COLOR));
-            render_bezier_markers(&mut d, &mut ps, s, hexcolor(BEZIER_COLOR));
+            // render_bezier_markers(&mut d, &mut ps, s, hexcolor(BEZIER_COLOR));
         }
-        let bezier_probe = mouse_pos;
-        if ps.len() >= 3 {
-            let roots = solve_quad_equation(ps[0], ps[1], ps[2], mouse_pos, 10.0);
-            if roots == 1 {
-                render_marker(&mut d, bezier_probe, Color::GREEN);
-            } else {
-                render_marker(&mut d, bezier_probe, Color::RED);
-            }
-        }
-
-        // if ps.len() > 1 {
-        //     for i in 0..(ps.len() - 1) {
-        //         render_line(&mut d, ps[i], ps[i + 1], Color::LIGHTGREEN);
+        // let bezier_probe = mouse_pos;
+        // if ps.len() >= 3 {
+        //     let roots = solve_quad_equation(ps[0], ps[1], ps[2], mouse_pos, 10.0);
+        //     if roots == 1 {
+        //         render_marker(&mut d, bezier_probe, Color::GREEN);
+        //     } else {
+        //         render_marker(&mut d, bezier_probe, Color::RED);
         //     }
         // }
+
+        if ps.len() > 1 && line_toggle {
+            for i in 0..(ps.len() - 1) {
+                render_line(&mut d, ps[i], ps[i + 1], hexcolor(LINE_COLOR));
+            }
+        }
     }
 }
