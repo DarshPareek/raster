@@ -5,3 +5,8 @@
 ./bezier_rust/target/*
 bezier_rust/target
 bezier_rust/target/*
+
+
+# Added by cargo
+
+/target
