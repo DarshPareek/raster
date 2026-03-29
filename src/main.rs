@@ -2,21 +2,20 @@ use raylib::color::Color;
 use raylib::drawing::RaylibDrawHandle;
 use raylib::ffi::KeyboardKey;
 use raylib::ffi::MouseButton;
-use raylib::ffi::false_;
 use raylib::math::Vector2;
 use raylib::prelude::*;
+use std::cmp::Ordering;
 const WIDTH_FACTOR: i32 = 4;
 const HEIGHT_FACTOR: i32 = 3;
 const WINDOW_FACTOR: i32 = 200;
 const WINDOW_WIDTH: i32 = WINDOW_FACTOR * WIDTH_FACTOR;
 const WINDOW_HEIGHT: i32 = WINDOW_FACTOR * HEIGHT_FACTOR;
-const GRID_FACTOR: i32 = 50;
+const GRID_FACTOR: i32 = 200;
 const GRID_WIDTH: i32 = WIDTH_FACTOR * GRID_FACTOR;
 const GRID_HEIGHT: i32 = HEIGHT_FACTOR * GRID_FACTOR;
 const MARKER_SIZE: Vector2 = Vector2 { x: 25.0, y: 25.0 };
 const BACKGROUD_COLOR: &str = "0D0C1D";
 const BEZIER_COLOR: &str = "F1DAC4";
-const LINE_COLOR: &str = "161B33";
 const MARKER_COLOR: &str = "474973";
 const CELL_WIDTH: i32 = WINDOW_WIDTH / GRID_WIDTH;
 const CELL_HEIGHT: i32 = WINDOW_HEIGHT / GRID_HEIGHT;
@@ -42,48 +41,6 @@ fn render_marker(d: &mut RaylibDrawHandle, pos: Vector2, color: Color) {
     );
 }
 
-fn render_line(d: &mut RaylibDrawHandle, from: Vector2, to: Vector2, color: Color) {
-    d.draw_line_ex(from, to, 3.0, color);
-}
-
-fn bezier3_sample(p1: Vector2, p2: Vector2, p3: Vector2, t: f32) -> Vector2 {
-    return p1 + (p2 - p1).scale_by(t * 2.0) + (p3 + p2.scale_by(-2.0) + p1).scale_by(t * t);
-}
-
-fn beziern_sample(ps: &mut Vec<Vector2>, p: f32) -> Vector2 {
-    let mut xs: Vec<Vector2> = ps.clone();
-    while xs.len() > 1 {
-        for i in 0..xs.len() - 1 {
-            xs[i] = xs[i].lerp(xs[i + 1], p);
-        }
-        xs.pop();
-    }
-    return xs[0];
-}
-
-fn render_bezier_markers(d: &mut RaylibDrawHandle, ps: &mut Vec<Vector2>, s: f32, color: Color) {
-    let mut p: f32 = 0.0;
-    while p <= 1.0 {
-        render_marker(d, bezier3_sample(ps[0], ps[1], ps[2], p), color);
-        p += s;
-    }
-}
-
-fn render_bezier_curve(d: &mut RaylibDrawHandle, ps: &mut Vec<Vector2>, s: f32, color: Color) {
-    let mut p: f32 = 0.0;
-    while p <= 1.0 {
-        let mut start: Vector2 = beziern_sample(ps, p);
-        // let mut start: Vector2 = bezier3_sample(ps[0], ps[1], ps[2], p);
-        let end: Vector2 = beziern_sample(ps, p + s);
-        render_line(d, start, end, color);
-        // render_line(d, ps[0], start, color);
-        // render_line(d, start, ps[2], color);
-        // start = ps[2];
-        start = end;
-        p += s;
-    }
-}
-
 fn ps_at(pos: Vector2, ps: &Vec<Vector2>) -> i32 {
     for i in 0..ps.len() {
         let begin: Vector2 = ps[i] - MARKER_SIZE.scale_by(0.5);
@@ -94,46 +51,6 @@ fn ps_at(pos: Vector2, ps: &Vec<Vector2>) -> i32 {
         }
     }
     return -1;
-}
-
-fn render_spline_markers(d: &mut RaylibDrawHandle, ps: &Vec<Vector2>) {
-    let mut i: usize = 0;
-    while i + 2 <= ps.len() {
-        let p1 = ps[i];
-        let p2 = ps[i + 1];
-        let p3 = ps[(i + 2) % ps.len()];
-        let n: usize = 25;
-        let mut j: usize = 0;
-        while j <= n {
-            let t: f32 = j as f32 / n as f32;
-            let position = bezier3_sample(p1, p2, p3, t);
-            d.draw_rectangle_v(
-                position - MARKER_SIZE.scale_by(0.25),
-                MARKER_SIZE.scale_by(0.5),
-                hexcolor(BEZIER_COLOR),
-            );
-            j += 1;
-        }
-        i += 2;
-    }
-}
-
-fn solve_quad_equation(p1: Vector2, p2: Vector2, p3: Vector2, p0: Vector2, threshold: f32) -> i32 {
-    let ax = (p3 + p2.scale_by(-2.0) + p1).x;
-    let bx = (p2 - p1).scale_by(2.0).x;
-    let cx = (p1 - p0).x;
-    let dx = bx * bx - 4.0 * ax * cx;
-    if dx > 0.0 {
-        let t1 = ((p2 - p1).scale_by(-2.0).x - dx.sqrt())
-            / (p3 + p2.scale_by(-2.0) + p1).scale_by(2.0).x;
-        let t2 = ((p2 - p1).scale_by(-2.0).x + dx.sqrt())
-            / (p3 + p2.scale_by(-2.0) + p1).scale_by(2.0).x;
-        let y1 = p1.y + 2.0 * t1 * (p2.y - p1.y) + t1 * t1 * (p3.y - 2.0 * p2.y + p1.y);
-        let y2 = p1.y + 2.0 * t2 * (p2.y - p1.y) + t2 * t2 * (p3.y - 2.0 * p2.y + p1.y);
-        return ((0.0 <= t1 && t1 <= 1.0 && (p0.y - y1).abs() < threshold)
-            || (0.0 <= t2 && t2 <= 1.0 && (p0.y - y2).abs() < threshold)) as i32;
-    }
-    return 0;
 }
 
 fn display_grid(d: &mut RaylibDrawHandle, grid: &Vec<Vec<bool>>) {
@@ -154,79 +71,108 @@ fn display_grid(d: &mut RaylibDrawHandle, grid: &Vec<Vec<bool>>) {
     }
 }
 
-fn render_splines_into_grid(
-    d: &mut RaylibDrawHandle,
-    ps: &Vec<Vector2>,
-    grid: &mut Vec<Vec<bool>>,
-) {
+struct Solution {
+    tx: f32,
+    d: f32,
+}
+
+impl Clone for Solution {
+    fn clone(&self) -> Self {
+        return Solution {
+            tx: self.tx,
+            d: self.d,
+        };
+    }
+}
+
+fn compare_solutions_by_tx(a: &Solution, b: &Solution) -> Ordering {
+    if a.tx < b.tx {
+        return Ordering::Less;
+    } else if a.tx > b.tx {
+        return Ordering::Greater;
+    } else {
+        return Ordering::Equal;
+    }
+}
+
+fn solve_row(row: i32, ps: &Vec<Vector2>) -> Vec<Solution> {
+    let mut solutions: Vec<Solution> = vec![];
+    let y = ((row as f32) + 0.5) * CELL_HEIGHT as f32;
+    let mut i: usize = 0;
+    while i + 2 <= ps.len() {
+        let p1 = ps[i];
+        let p2 = ps[i + 1];
+        let p3 = ps[(i + 2) % ps.len()];
+        let dx12 = p2.x - p1.x;
+        let dx23 = p3.x - p2.x;
+        let dy12 = p2.y - p1.y;
+        let dy23 = p3.y - p2.y;
+        let a = dy23 - dy12;
+        let b = 2.0 * dy12;
+        let c = p1.y - y;
+        let mut t: Vec<f32> = vec![];
+        if a.abs() <= 1e-6 {
+            if b.abs() > 1e-6 {
+                t.push(-c / b);
+            }
+        } else {
+            let d = b * b - 4.0 * a * c;
+            if d >= 0.0 {
+                t.push((-b + d.sqrt()) / (2.0 * a));
+                t.push((-b - d.sqrt()) / (2.0 * a));
+            }
+        }
+        for j in 0..t.len() {
+            if !(0.0 <= t[j] && t[j] <= 1.0) {
+                // i += 2;
+                continue;
+            } else {
+                let tx = (dx23 - dx12) * t[j] * t[j] + 2.0 * dx12 * t[j] + p1.x;
+                let s = (dy23 - dy12) * t[j] + dy12;
+                let soln = Solution { tx: tx, d: s };
+                solutions.push(soln);
+            }
+        }
+
+        i += 2
+    }
+    solutions.sort_by(compare_solutions_by_tx);
+    return solutions;
+}
+
+fn render_splines_into_grid(ps: &Vec<Vector2>, grid: &mut Vec<Vec<bool>>) {
+    for row in 0..GRID_HEIGHT {
+        for col in 0..GRID_WIDTH {
+            grid[row as usize][col as usize] = false;
+        }
+    }
     for row in 0..GRID_HEIGHT {
         let mut winding = 0;
-        for col in 0..GRID_WIDTH {
-            let cell_size = Vector2 {
-                x: CELL_WIDTH as f32,
-                y: CELL_HEIGHT as f32,
-            };
-            let center = Vector2 {
-                x: (col * CELL_WIDTH) as f32,
-                y: (row * CELL_HEIGHT) as f32,
-            };
-            let cell_position = center + cell_size.scale_by(0.5);
-            let x = cell_position.x;
-            let y = cell_position.y;
-            let index = -1;
-            let mut i: usize = 0;
-            while i + 2 <= ps.len() {
-                // println!("{row} {col}");
-                let p1 = ps[i];
-                let p2 = ps[i + 1];
-                let p3 = ps[(i + 2) % ps.len()];
-                let dx12 = p2.x - p1.x;
-                let dx23 = p3.x - p2.x;
-                let dy12 = p2.y - p1.y;
-                let dy23 = p3.y - p2.y;
-                let a = dy23 - dy12;
-                let b = 2.0 * dy12;
-                let c = p1.y - y;
-                let d = b * b - 4.0 * a * c;
-                if d <= 0.0 {
-                    i += 2;
-                    continue;
-                } else if d > 0.0 {
-                    let t: Vec<f32> =
-                        vec![(-b + d.sqrt()) / (2.0 * a), (-b - d.sqrt()) / (2.0 * a)];
-                    for j in 0..t.len() {
-                        if !(0.0 <= t[j] && t[j] <= 1.0) {
-                            // i += 2;
-                            continue;
-                        } else {
-                            let tx = (dx23 - dx12) * t[j] * t[j] + 2.0 * dx12 * t[j] + p1.x;
-                            let ty = (dy23 - dy12) * t[j] * t[j] + 2.0 * dy12 * t[j] + p1.y;
-                            // if x < tx {
-                            //     continue;
-                            // }
-                            if (tx - x).abs() < cell_size.x * 0.5 {
-                                if (dy23 - dy12) * t[j] + dy12 <= 0.0 {
-                                    winding += 1;
-                                } else if (dy23 - dy12) * t[j] + dy12 > 0.0 {
-                                    winding -= 1;
-                                }
-                            }
-                        }
+        let solutions = solve_row(row, ps);
+        for i in 0..solutions.len() {
+            let s = solutions[i].clone();
+            if winding > 0 {
+                if i > 0 {
+                    let ps = solutions[i - 1].clone();
+                    let col1 = (ps.tx / CELL_WIDTH as f32) as usize;
+                    let col2 = (s.tx / CELL_WIDTH as f32) as usize;
+                    let mut j = col1;
+                    while j <= col2 {
+                        grid[row as usize][j] = true;
+                        j += 1
                     }
                 }
-                i += 2
             }
-            if winding > 0 {
-                grid[row as usize][col as usize] = true;
-            } else {
-                grid[row as usize][col as usize] = false;
+            if s.d < 0.0 {
+                winding += 1;
+            } else if s.d > 0.0 {
+                winding -= 1;
             }
         }
     }
 }
 
 fn main() {
-    println!("{CELL_HEIGHT}, {CELL_WIDTH}, {WINDOW_HEIGHT}, {WINDOW_WIDTH}");
     let mut ps: Vec<Vector2> = Vec::new();
     let mut grid: Vec<Vec<bool>> = Vec::new();
     for _ in 0..GRID_HEIGHT {
@@ -274,14 +220,17 @@ fn main() {
                 ps.push(mouse_pos);
                 ps_selected = (ps.len() - 1) as i32;
             }
+            render_to_grid = true;
         }
         if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT) {
             if ps_selected > -1 && ps_selected < ps.len() as i32 {
                 ps[ps_selected as usize] = mouse_pos;
             }
+            render_to_grid = true;
         }
         if rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT) {
             ps_selected = -1;
+            render_to_grid = true;
         }
 
         let mouse_wheel = rl.get_mouse_wheel_move();
@@ -299,7 +248,7 @@ fn main() {
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(hexcolor(BACKGROUD_COLOR));
         if render_to_grid {
-            render_splines_into_grid(&mut d, &ps, &mut grid);
+            render_splines_into_grid(&ps, &mut grid);
             render_to_grid = false;
         }
         display_grid(&mut d, &grid);
